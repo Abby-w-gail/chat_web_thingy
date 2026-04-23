@@ -9,6 +9,12 @@
 			font-family: "Times New Roman", serif;
 			margin: 0;
 		}
+		
+		h1 {
+			font-size: 20px;
+			margin: 0 0 10px 0;
+			color: #800000;
+		}
 
 		#container {
 			width: 700px;
@@ -16,29 +22,19 @@
 			background: white;
 			border: 1px solid #aaa;
 			padding: 10px;
-
 			display: flex;
 			flex-direction: column;
 			height: 80vh;
 			box-sizing: border-box;
 		}
 
-		h1 {
-			font-size: 20px;
-			margin: 0 0 10px 0;
-			color: #800000;
-		}
-
-		/* CHAT AREA */
 		#messages {
 			flex: 1;
 			overflow-y: auto;
 			border: 1px solid #ddd;
 			padding: 5px;
-			margin: 0 0 10px 0;
-
+			margin-bottom: 10px;
 			list-style: none;
-			box-sizing: border-box;
 		}
 
 		.msg {
@@ -46,19 +42,12 @@
 			gap: 10px;
 			padding: 6px;
 			border-bottom: 1px solid #eee;
-			align-items: flex-start;
 		}
 
 		.msg img {
 			max-width: 120px;
 			max-height: 120px;
 			border: 1px solid #aaa;
-		}
-
-		.msg-content {
-			display: flex;
-			flex-direction: column;
-			max-width: 100%;
 		}
 
 		.name {
@@ -71,7 +60,6 @@
 			overflow-wrap: break-word;
 		}
 
-		/* INPUT AREA */
 		form {
 			display: flex;
 			gap: 5px;
@@ -81,32 +69,25 @@
 		input {
 			padding: 5px;
 			border: 1px solid #aaa;
-			font-family: inherit;
-			box-sizing: border-box;
 		}
 
-		#input {
-			flex: 1;
+		#boards {
+			display: flex;
+			justify-content: center;
+			gap: 10px;
+			margin-top: 10px;
 		}
 
-		button {
+		.boardBtn {
 			padding: 5px 10px;
-			cursor: pointer;
 			border: 1px solid #888;
 			background: #eee;
+			cursor: pointer;
 		}
 
-		button:hover {
+		.boardBtn.active {
 			background: #ddd;
-		}
-
-		#username {
-			width: 100%;
-			margin-top: 5px;
-		}
-
-		#imageFile {
-			margin-top: 5px;
+			font-weight: bold;
 		}
 	</style>
 </head>
@@ -115,25 +96,31 @@
 
 <div id="container">
 	<h1>Chat :3</h1>
-
+	
+	
 	<ul id="messages"></ul>
 
 	<form id="form">
-		<input id="input" placeholder="message..." autocomplete="off" />
+		<input id="input" autocomplete="off" placeholder="message..." />
 		<button>send</button>
 	</form>
 
 	<input type="file" id="imageFile" />
 	<input id="username" placeholder="username" />
+
+	<div id="boards">
+		<button class="boardBtn active" data-board="main">/main/</button>
+		<button class="boardBtn" data-board="b">/b/</button>
+	</div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-	console.log("script loaded");
+	console.log("loaded");
 
 	// =====================
-	// STABLE USER ID
+	// ID
 	// =====================
 	let userId = localStorage.getItem("userId");
 
@@ -142,17 +129,22 @@
 		localStorage.setItem("userId", userId);
 	}
 
-	let username = localStorage.getItem("username") || "anon";
+	let username = localStorage.getItem("username") || "u.n. owen";
+	let currentBoard = "main";
 
+	// =====================
+	// SOCKET
+	// =====================
 	const socket = io();
 
 	socket.emit("register", {
 		userId,
-		username
+		username,
+		board: currentBoard
 	});
 
 	// =====================
-	// ELEMENTS
+	// UI
 	// =====================
 	const form = document.getElementById("form");
 	const input = document.getElementById("input");
@@ -168,8 +160,25 @@
 
 		socket.emit("register", {
 			userId,
-			username
+			username,
+			board: currentBoard
 		});
+	});
+
+	// =====================
+	// BOARDS
+	// =====================
+	document.querySelectorAll(".boardBtn").forEach(btn => {
+		btn.onclick = () => {
+			currentBoard = btn.dataset.board;
+
+			document.querySelectorAll(".boardBtn").forEach(b =>
+				b.classList.remove("active")
+			);
+			btn.classList.add("active");
+
+			socket.emit("switch board", currentBoard);
+		};
 	});
 
 	// =====================
@@ -197,7 +206,7 @@
 
 		li.innerHTML = `
 			${msg.image ? `<img src="${msg.image}">` : ""}
-			<div class="msg-content">
+			<div>
 				<div class="name">${escapeHtml(msg.name)}</div>
 				<div class="text">${escapeHtml(msg.text)}</div>
 			</div>
@@ -208,7 +217,7 @@
 	}
 
 	// =====================
-	// SEND (NO REFRESH EVER)
+	// SEND
 	// =====================
 	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
@@ -239,8 +248,11 @@
 		history.forEach(render);
 	});
 
-	socket.on("chat message", (msg) => {
-		render(msg);
+	socket.on("chat message", (data) => {
+		// only show current board
+		if (data.board !== currentBoard) return;
+
+		render(data.msg);
 	});
 </script>
 
