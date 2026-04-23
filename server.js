@@ -29,6 +29,17 @@ io.on("connection", (socket) => {
 		if (data?.board) socket.board = data.board;
 	});
 
+	socket.on("clear chat", () => {
+		const board = socket.board || "main";
+	
+		if (!boards[board]) return;
+	
+		boards[board] = [];
+	
+		io.emit("chat history", []); // clear for everyone
+		console.log("chat cleared on board:", board);
+	});
+
 	socket.on("switch board", (board) => {
 		if (!boards[board]) return;
 
