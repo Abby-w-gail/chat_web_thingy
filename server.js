@@ -36,15 +36,8 @@ io.on("connection", (socket) => {
 		socket.emit("chat history", boards[board]);
 	});
 
-	socket.on("clear chat", () => {
-		boards[socket.board] = [];
-		io.emit("chat history", []);
-	});
-
 	socket.on("chat message", (msg) => {
 		if (!msg) return;
-
-		const board = socket.board || "main";
 
 		const text = typeof msg.text === "string" ? msg.text.trim() : "";
 		const image = msg.image || null;
@@ -54,18 +47,20 @@ io.on("connection", (socket) => {
 		const fullMsg = {
 			id: Date.now() + Math.random(),
 			name: `${socket.username} #${socket.userId}`,
+			userId: socket.userId,
 			text,
 			image,
+			replyTo: msg.replyTo || null,
 			time: Date.now()
 		};
 
-		boards[board].push(fullMsg);
+		boards[socket.board].push(fullMsg);
 
-		if (boards[board].length > 50) {
-			boards[board].shift();
+		if (boards[socket.board].length > 50) {
+			boards[socket.board].shift();
 		}
 
-		io.emit("chat message", { board, msg: fullMsg });
+		io.emit("chat message", { board: socket.board, msg: fullMsg });
 	});
 });
 
