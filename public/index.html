@@ -8,7 +8,6 @@
 			background: #eef2ff;
 			font-family: "Times New Roman", serif;
 			margin: 0;
-			padding: 0;
 		}
 
 		#container {
@@ -17,6 +16,11 @@
 			background: white;
 			border: 1px solid #aaa;
 			padding: 10px;
+
+			display: flex;
+			flex-direction: column;
+			height: 80vh;
+			box-sizing: border-box;
 		}
 
 		h1 {
@@ -25,60 +29,24 @@
 			color: #800000;
 		}
 
+		/* CHAT AREA */
 		#messages {
-			list-style: none;
-			padding: 0;
-			margin: 0;
-		}
-
-		.msg {
-			padding: 6px;
-			border-bottom: 1px solid #ddd;
-		}
-
-		.name {
-			color: #117743;
-			font-weight: bold;
-		}
-
-		.text {
-			color: #000;
-		}
-
-		form {
-			margin-top: 10px;
-		}
-
-		input {
-			width: 80%;
+			flex: 1;
+			overflow-y: auto;
+			border: 1px solid #ddd;
 			padding: 5px;
-			border: 1px solid #aaa;
-			font-family: inherit;
+			margin: 0 0 10px 0;
+
+			list-style: none;
+			box-sizing: border-box;
 		}
 
-		button {
-			padding: 5px 10px;
-			border: 1px solid #888;
-			background: #eee;
-			cursor: pointer;
-		}
-
-		button:hover {
-			background: #ddd;
-		}
-
-		.header {
-			font-size: 12px;
-			color: #555;
-			margin-bottom: 10px;
-		}
-		
 		.msg {
 			display: flex;
 			gap: 10px;
-			align-items: flex-start;
-			border-bottom: 1px solid #ddd;
 			padding: 6px;
+			border-bottom: 1px solid #eee;
+			align-items: flex-start;
 		}
 
 		.msg img {
@@ -90,126 +58,190 @@
 		.msg-content {
 			display: flex;
 			flex-direction: column;
+			max-width: 100%;
 		}
-		
+
+		.name {
+			color: #117743;
+			font-weight: bold;
+		}
+
+		.text {
+			white-space: pre-wrap;
+			overflow-wrap: break-word;
+		}
+
+		/* INPUT AREA */
+		form {
+			display: flex;
+			gap: 5px;
+			margin-bottom: 5px;
+		}
+
+		input {
+			padding: 5px;
+			border: 1px solid #aaa;
+			font-family: inherit;
+			box-sizing: border-box;
+		}
+
+		#input {
+			flex: 1;
+		}
+
+		button {
+			padding: 5px 10px;
+			cursor: pointer;
+			border: 1px solid #888;
+			background: #eee;
+		}
+
+		button:hover {
+			background: #ddd;
+		}
+
+		#username {
+			width: 100%;
+			margin-top: 5px;
+		}
+
+		#imageFile {
+			margin-top: 5px;
+		}
 	</style>
 </head>
+
 <body>
 
 <div id="container">
 	<h1>Chat :3</h1>
-	<div class="header">chat thingy!!! todo: get this online</div>
 
-	<!-- username input -->
 	<ul id="messages"></ul>
 
 	<form id="form">
-		<input id="input" autocomplete="off" placeholder="type message..." />
-		<button>post</button>
+		<input id="input" placeholder="message..." autocomplete="off" />
+		<button>send</button>
 	</form>
-	
-	<input type="file" id="imageFile" accept="image/*" />
-	
 
-	<br>
-
-	<div class="header"></div>
-	<input id="username" placeholder="enter username" />
-
+	<input type="file" id="imageFile" />
+	<input id="username" placeholder="username" />
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 
-
-
-
-
-
-
-
-
-
 <script>
+	console.log("script loaded");
+
+	// =====================
+	// STABLE USER ID
+	// =====================
+	let userId = localStorage.getItem("userId");
+
+	if (!userId) {
+		userId = Math.floor(100000 + Math.random() * 900000).toString();
+		localStorage.setItem("userId", userId);
+	}
+
+	let username = localStorage.getItem("username") || "anon";
+
 	const socket = io();
 
+	socket.emit("register", {
+		userId,
+		username
+	});
+
+	// =====================
+	// ELEMENTS
+	// =====================
 	const form = document.getElementById("form");
 	const input = document.getElementById("input");
-	const usernameInput = document.getElementById("username");
 	const messages = document.getElementById("messages");
 	const imageFileInput = document.getElementById("imageFile");
+	const usernameInput = document.getElementById("username");
 
-	//attachment
+	usernameInput.value = username;
+
+	usernameInput.addEventListener("input", () => {
+		username = usernameInput.value;
+		localStorage.setItem("username", username);
+
+		socket.emit("register", {
+			userId,
+			username
+		});
+	});
+
+	// =====================
+	// HELPERS
+	// =====================
 	function fileToBase64(file) {
-		return new Promise((resolve, reject) => {
-			const reader = new FileReader();
-
-			reader.onload = () => resolve(reader.result);
-			reader.onerror = reject;
-
-			reader.readAsDataURL(file);
+		return new Promise((res, rej) => {
+			const r = new FileReader();
+			r.onload = () => res(r.result);
+			r.onerror = rej;
+			r.readAsDataURL(file);
 		});
 	}
-	
-	function renderMessage(msg) {
-		const item = document.createElement("li");
-		item.classList.add("msg");
 
-		item.innerHTML = `
+	function escapeHtml(str) {
+		return str
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+	}
+
+	function render(msg) {
+		const li = document.createElement("li");
+		li.className = "msg";
+
+		li.innerHTML = `
 			${msg.image ? `<img src="${msg.image}">` : ""}
 			<div class="msg-content">
-				<span class="name">${msg.name}</span>
-				<span class="text">${msg.text}</span>
+				<div class="name">${escapeHtml(msg.name)}</div>
+				<div class="text">${escapeHtml(msg.text)}</div>
 			</div>
 		`;
 
-		messages.appendChild(item);
-	}
-	
-	
-	// load saved username
-	usernameInput.value = localStorage.getItem("username") || "";
-
-	// send username to server on change
-	function updateUsername() {
-		localStorage.setItem("username", usernameInput.value);
-		socket.emit("set username", usernameInput.value);
+		messages.appendChild(li);
+		messages.scrollTop = messages.scrollHeight;
 	}
 
-	usernameInput.addEventListener("input", updateUsername);
-
-	// set initial username on connect
-	socket.emit("set username", usernameInput.value);
-
-	form.addEventListener("submit", async function(e) {
+	// =====================
+	// SEND (NO REFRESH EVER)
+	// =====================
+	form.addEventListener("submit", async (e) => {
 		e.preventDefault();
 
-		let imageData = null;
+		const text = input.value.trim();
+		let image = null;
 
 		if (imageFileInput.files.length > 0) {
-			imageData = await fileToBase64(imageFileInput.files[0]);
+			image = await fileToBase64(imageFileInput.files[0]);
 		}
 
-		if (input.value.trim() !== "" || imageData) {
-			socket.emit("chat message", {
-				text: input.value,
-				image: imageData
-			});
+		if (!text && !image) return;
 
-			input.value = "";
-			imageFileInput.value = "";
-		}
+		socket.emit("chat message", {
+			text,
+			image
+		});
+
+		input.value = "";
+		imageFileInput.value = "";
 	});
 
-	socket.on("chat history", function(history) {
-		history.forEach(renderMessage);
+	// =====================
+	// RECEIVE
+	// =====================
+	socket.on("chat history", (history) => {
+		messages.innerHTML = "";
+		history.forEach(render);
 	});
 
-	socket.on("chat message", function(msg) {
-		renderMessage(msg);
-		window.scrollTo(0, document.body.scrollHeight);
+	socket.on("chat message", (msg) => {
+		render(msg);
 	});
-	
-	
 </script>
 
 </body>
