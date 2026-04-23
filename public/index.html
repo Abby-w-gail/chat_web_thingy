@@ -89,6 +89,12 @@
 			background: #ddd;
 			font-weight: bold;
 		}
+		
+		.time {
+			font-size: 10px;
+			color: #666;
+			margin-top: 3px;
+		}
 	</style>
 </head>
 
@@ -199,6 +205,20 @@
 			.replace(/</g, "&lt;")
 			.replace(/>/g, "&gt;");
 	}
+	
+	function formatTime(ts) {
+		const d = new Date(ts);
+
+		const hh = String(d.getHours()).padStart(2, "0");
+		const mm = String(d.getMinutes()).padStart(2, "0");
+		const ss = String(d.getSeconds()).padStart(2, "0");
+
+		const dd = String(d.getDate()).padStart(2, "0");
+		const mo = String(d.getMonth() + 1).padStart(2, "0");
+		const yy = String(d.getFullYear()).slice(-2);
+
+		return `${hh}:${mm}:${ss} - ${dd}/${mo}/${yy}`;
+	}
 
 	function render(msg) {
 		const li = document.createElement("li");
@@ -206,9 +226,10 @@
 
 		li.innerHTML = `
 			${msg.image ? `<img src="${msg.image}">` : ""}
-			<div>
+			<div class="msg-content">
 				<div class="name">${escapeHtml(msg.name)}</div>
 				<div class="text">${escapeHtml(msg.text)}</div>
+				<div class="time">${formatTime(msg.time)}</div>
 			</div>
 		`;
 
