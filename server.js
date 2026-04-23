@@ -36,6 +36,11 @@ io.on("connection", (socket) => {
 		socket.emit("chat history", boards[board]);
 	});
 
+	socket.on("clear chat", () => {
+		boards[socket.board] = [];
+		io.emit("chat history", []);
+	});
+
 	socket.on("chat message", (msg) => {
 		if (!msg) return;
 
