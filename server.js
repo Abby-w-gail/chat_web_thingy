@@ -10,28 +10,36 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.static("public"));
 
-let messages = [];
+// each board has its own messages
+let boards = {
+	main: [],
+	b: []
+};
 
 io.on("connection", (socket) => {
 	socket.userId = "unknown";
 	socket.username = "u.n. owen";
+	socket.board = "main";
 
-	socket.emit("chat history", messages);
+	socket.emit("chat history", boards[socket.board]);
 
-	// receive stable id from client
 	socket.on("register", (data) => {
-		if (data?.userId) {
-			socket.userId = String(data.userId);
-		}
-		if (data?.username) {
-			socket.username = String(data.username).slice(0, 20);
-		}
+		if (data?.userId) socket.userId = String(data.userId);
+		if (data?.username) socket.username = String(data.username).slice(0, 20);
+		if (data?.board) socket.board = data.board;
+	});
 
-		console.log("connected:", socket.userId);
+	socket.on("switch board", (board) => {
+		if (!boards[board]) return;
+
+		socket.board = board;
+		socket.emit("chat history", boards[board]);
 	});
 
 	socket.on("chat message", (msg) => {
 		if (!msg) return;
+
+		const board = socket.board || "main";
 
 		const text = typeof msg.text === "string" ? msg.text.trim() : "";
 		const image = msg.image || null;
@@ -46,13 +54,16 @@ io.on("connection", (socket) => {
 			time: Date.now()
 		};
 
-		messages.push(fullMsg);
-		if (messages.length > 50) messages.shift();
+		boards[board].push(fullMsg);
 
-		io.emit("chat message", fullMsg);
+		if (boards[board].length > 50) {
+			boards[board].shift();
+		}
+
+		io.emit("chat message", { board, msg: fullMsg });
 	});
 });
 
 server.listen(PORT, () => {
-	console.log("server running on port " + PORT);
+	console.log("server running on " + PORT);
 });
