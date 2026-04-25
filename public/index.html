@@ -4,126 +4,89 @@
 	<title>chat thingy</title>
 
 	<style>
-		body {
-			background: #eef2ff;
-			font-family: "Times New Roman", serif;
-			margin: 0;
-		}
-		
-		h1 {
-			font-size: 20px;
-			margin: 0 0 10px 0;
-			color: #800000;
-		}
+		body { background:#eef2ff; font-family:"Times New Roman"; margin:0; }
+
+		#layout { display:flex; width:1000px; margin:20px auto; gap:10px; }
 
 		#container {
-			width: 700px;
-			margin: 20px auto;
-			background: white;
-			border: 1px solid #aaa;
-			padding: 10px;
-			display: flex;
-			flex-direction: column;
-			height: 80vh;
-			box-sizing: border-box;
+			width:700px; background:white; border:1px solid #aaa;
+			padding:10px; display:flex; flex-direction:column; height:80vh;
 		}
 
+		h1 { font-size:20px; margin:0 0 10px 0; color:#800000; }
+
 		#messages {
-			flex: 1;
-			overflow-y: auto;
-			border: 1px solid #ddd;
-			padding: 5px;
-			margin-bottom: 10px;
-			list-style: none;
+			flex:1; overflow-y:auto; border:1px solid #ddd;
+			padding:5px; margin-bottom:10px; list-style:none;
 		}
 
 		.msg {
-			display: flex;
-			gap: 10px;
-			padding: 6px;
-			border-bottom: 1px solid #eee;
+			display:flex;      
+			gap:10px;
+			padding:6px;
+			border-bottom:1px solid #eee;
+			align-items:flex-start;
 		}
 
 		.msg img {
-			max-width: 120px;
-			max-height: 120px;
-			border: 1px solid #aaa;
+			max-width:120px;
+			max-height:120px;
+			border:1px solid #aaa;
 		}
 
-		.name {
-			color: #117743;
-			font-weight: bold;
+		.msg-content {
+			flex:1;
 		}
 
-		.text {
-			white-space: pre-wrap;
-			overflow-wrap: break-word;
+		.name { color:#117743; font-weight:bold; }
+
+		.msgid { color:#888; font-size:11px; margin-left:6px; }
+
+	.reply-inline {
+		color: #000;
+		font-size: inherit;
+		font-weight: normal;
+		display: block;
+		margin-bottom: 2px;
+	}
+
+		form { display:flex; gap:5px; }
+
+		input { padding:5px; border:1px solid #aaa; }
+
+		#boards { display:flex; justify-content:center; gap:10px; margin-top:10px; }
+
+		.boardBtn { padding:5px; border:1px solid #888; background:#eee; cursor:pointer; }
+		.boardBtn.active { background:#ddd; }
+
+		#threadsPanel {
+			width:250px; background:white; border:1px solid #aaa;
+			padding:10px; display:flex; flex-direction:column; height:80vh;
 		}
 
-		form {
-			display: flex;
-			gap: 5px;
-			margin-bottom: 5px;
-		}
+		#threadList { flex:1; overflow-y:auto; border:1px solid #ddd; }
 
-		input {
-			padding: 5px;
-			border: 1px solid #aaa;
-		}
-
-		#boards {
-			display: flex;
-			justify-content: center;
-			gap: 10px;
-			margin-top: 10px;
-		}
-
-		.boardBtn {
-			padding: 5px 10px;
-			border: 1px solid #888;
-			background: #eee;
-			cursor: pointer;
-		}
-
-		.boardBtn.active {
-			background: #ddd;
-			font-weight: bold;
-		}
-		
-		.time {
-			font-size: 10px;
-			color: #666;
-			margin-top: 3px;
-		}
-		
-		.actions {
-			margin-top: 4px;
-		}
+		.threadItem { padding:6px; border-bottom:1px solid #eee; cursor:pointer; }
 
 		.reply-btn {
-			font-size: 12px;
-			color: #555;
-			cursor: pointer;
-			user-select: none;
-		}
-
-		.reply-btn:hover {
-			text-decoration: underline;
-			color: #000;
+			font-size:12px;
+			color:#555;
+			cursor:pointer;
 		}
 	</style>
 </head>
 
 <body>
 
+<div id="layout">
+
 <div id="container">
-	<h1>Chat :3</h1>
-	
-	
+	<h1 id="title">/main/ :3</h1>
+
 	<ul id="messages"></ul>
 
 	<form id="form">
-		<input id="input" autocomplete="off" placeholder="message..." />
+		<input id="input" placeholder="message..." />
 		<button>send</button>
 	</form>
 
@@ -133,182 +96,136 @@
 	<div id="boards">
 		<button class="boardBtn active" data-board="main">/main/</button>
 		<button class="boardBtn" data-board="b">/b/</button>
+		<button class="boardBtn" data-board="food">/food/</button>
+		<button class="boardBtn" data-board="images">/images/</button>
 	</div>
+</div>
+
+<div id="threadsPanel">
+	<div id="threadList"></div>
+	<button id="newThreadBtn">+ thread</button>
+</div>
+
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-	console.log("loaded");
+let userId = localStorage.getItem("userId") || Math.floor(Math.random()*999999);
+localStorage.setItem("userId", userId);
 
-	// =====================
-	// ID
-	// =====================
-	let userId = localStorage.getItem("userId");
+let username = localStorage.getItem("username") || "u.n. owen";
+let currentBoard = "main";
+let replyTarget = null;
 
-	if (!userId) {
-		userId = Math.floor(100000 + Math.random() * 900000).toString();
-		localStorage.setItem("userId", userId);
-	}
+const socket = io();
 
-	let username = localStorage.getItem("username") || "u.n. owen";
-	let currentBoard = "main";
-	let replyTarget = null;
+socket.emit("register", { userId, username, board: currentBoard });
 
-	// =====================
-	// SOCKET
-	// =====================
-	const socket = io();
+const messages = document.getElementById("messages");
+const input = document.getElementById("input");
+const form = document.getElementById("form");
+const title = document.getElementById("title");
 
-	socket.emit("register", {
-		userId,
-		username,
-		board: currentBoard
-	});
+document.querySelectorAll(".boardBtn").forEach(btn => {
+	btn.onclick = () => {
+		currentBoard = btn.dataset.board;
+		title.innerText = `/${currentBoard}/ :3`;
 
-	// =====================
-	// UI
-	// =====================
-	const form = document.getElementById("form");
-	const input = document.getElementById("input");
-	const messages = document.getElementById("messages");
-	const imageFileInput = document.getElementById("imageFile");
-	const usernameInput = document.getElementById("username");
+		document.querySelectorAll(".boardBtn").forEach(b=>b.classList.remove("active"));
+		btn.classList.add("active");
 
-	usernameInput.value = username;
+		socket.emit("switch board", currentBoard);
+	};
+});
 
-	usernameInput.addEventListener("input", () => {
-		username = usernameInput.value;
-		localStorage.setItem("username", username);
+document.getElementById("newThreadBtn").onclick = () => {
+	let name = prompt("thread name (max 30 chars)");
+	if (!name) return;
+	name = name.trim().slice(0,30);
+	socket.emit("create thread", name);
+};
 
-		socket.emit("register", {
-			userId,
-			username,
-			board: currentBoard
-		});
-	});
-
-	// =====================
-	// BOARDS
-	// =====================
-	document.querySelectorAll(".boardBtn").forEach(btn => {
-		btn.onclick = () => {
-			currentBoard = btn.dataset.board;
-
-			document.querySelectorAll(".boardBtn").forEach(b =>
-				b.classList.remove("active")
-			);
-			btn.classList.add("active");
-
-			socket.emit("switch board", currentBoard);
+socket.on("threads update", (threads)=>{
+	const list = document.getElementById("threadList");
+	list.innerHTML="";
+	threads.forEach(t=>{
+		let d=document.createElement("div");
+		d.className="threadItem";
+		d.innerText=t.name;
+		d.onclick=()=>{
+			currentBoard=t.id;
+			title.innerText=t.name+" :3";
+			socket.emit("switch board", t.id);
 		};
+		list.appendChild(d);
 	});
+});
 
-	// =====================
-	// HELPERS
-	// =====================
-	function fileToBase64(file) {
-		return new Promise((res, rej) => {
-			const r = new FileReader();
-			r.onload = () => res(r.result);
-			r.onerror = rej;
+form.onsubmit = async (e)=>{
+	e.preventDefault();
+
+	let text=input.value.trim();
+	let image=null;
+
+	const file=document.getElementById("imageFile").files[0];
+	if(file){
+		const r=new FileReader();
+		image=await new Promise(res=>{
+			r.onload=()=>res(r.result);
 			r.readAsDataURL(file);
 		});
 	}
 
-	function escapeHtml(str) {
-		return str
-			.replace(/&/g, "&amp;")
-			.replace(/</g, "&lt;")
-			.replace(/>/g, "&gt;");
-	}
+	if(!text && !image) return;
+
+	socket.emit("chat message",{text,image,replyTo:replyTarget});
+
+	input.value="";
+	replyTarget=null;
+	input.placeholder="message...";
 	
-	function formatTime(ts) {
-		const d = new Date(ts);
+	document.getElementById("imageFile").value = "";
+};
 
-		const hh = String(d.getHours()).padStart(2, "0");
-		const mm = String(d.getMinutes()).padStart(2, "0");
-		const ss = String(d.getSeconds()).padStart(2, "0");
+function render(msg){
+	let li=document.createElement("li");
+	li.className="msg";
 
-		const dd = String(d.getDate()).padStart(2, "0");
-		const mo = String(d.getMonth() + 1).padStart(2, "0");
-		const yy = String(d.getFullYear()).slice(-2);
-
-		return `${hh}:${mm}:${ss} - ${dd}/${mo}/${yy}`;
-	}
-
-	function render(msg) {
-		const li = document.createElement("li");
-		li.className = "msg";
-		li.dataset.id = msg.id;
-
-		li.innerHTML = `
-			${msg.replyTo ? `<div class="reply">>>${msg.replyTo}</div>` : ""}
-			${msg.image ? `<img src="${msg.image}">` : ""}
-			<div class="msg-content">
-				<div class="name">${escapeHtml(msg.name)}</div>
-				<div class="text">${escapeHtml(msg.text)}</div>
-				<div class="time">${formatTime(msg.time)}</div>
-				<div class="actions">
-					<span class="reply-btn">[reply]</span>
-				</div>
+	li.innerHTML=`
+		${msg.image ? `<img src="${msg.image}">` : ""}
+		<div class="msg-content">
+			<div>
+				<span class="name">${msg.name}</span>
+				<span class="msgid">no. ${msg.msgId}</span>
 			</div>
-		`;
+			<div>
+				${msg.replyTo ? `<span class="reply-inline">>>${msg.replyTo}</span>` : ""}
+				${msg.text}
+			</div>
+			<div class="reply-btn">[reply]</div>
+		</div>
+	`;
 
-		li.querySelector(".reply-btn").onclick = (e) => {
-			e.stopPropagation(); // prevents other clicks
+	li.querySelector(".reply-btn").onclick=()=>{
+		replyTarget=msg.msgId;
+		input.placeholder="replying to >>"+msg.msgId;
+		input.focus();
+	};
 
-			replyTarget = msg.userId;
-			input.placeholder = "replying to >>" + msg.userId;
-			input.focus();
-		};
+	messages.appendChild(li);
+	messages.scrollTop=messages.scrollHeight;
+}
 
-		messages.appendChild(li);
-		messages.scrollTop = messages.scrollHeight;
-	}
+socket.on("chat history",(h)=>{
+	messages.innerHTML="";
+	h.forEach(render);
+});
 
-	// =====================
-	// SEND
-	// =====================
-	form.addEventListener("submit", async (e) => {
-		e.preventDefault();
-
-		const text = input.value.trim();
-		let image = null;
-
-		if (imageFileInput.files.length > 0) {
-			image = await fileToBase64(imageFileInput.files[0]);
-		}
-
-		if (!text && !image) return;
-
-		socket.emit("chat message", {
-			text,
-			image,
-			replyTo: replyTarget
-		});
-
-		input.value = "";
-		imageFileInput.value = "";
-
-		replyTarget = null;
-		input.placeholder = "message...";
-	});
-
-	// =====================
-	// RECEIVE
-	// =====================
-	socket.on("chat history", (history) => {
-		messages.innerHTML = "";
-		history.forEach(render);
-	});
-
-	socket.on("chat message", (data) => {
-		// only show current board
-		if (data.board !== currentBoard) return;
-
-		render(data.msg);
-	});
+socket.on("chat message",(d)=>{
+	if(d.board!==currentBoard) return;
+	render(d.msg);
+});
 </script>
 
 </body>
