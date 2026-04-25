@@ -93,6 +93,7 @@
 	<input type="file" id="imageFile" />
 	<input id="username" placeholder="username" />
 
+
 	<div id="boards">
 		<button class="boardBtn active" data-board="main">/main/</button>
 		<button class="boardBtn" data-board="b">/b/</button>
@@ -126,6 +127,25 @@ const messages = document.getElementById("messages");
 const input = document.getElementById("input");
 const form = document.getElementById("form");
 const title = document.getElementById("title");
+const usernameInput = document.getElementById("username");
+
+usernameInput.value = username;
+
+usernameInput.addEventListener("input", () => {
+	username = usernameInput.value.trim();
+
+	if (!username) {
+		username = "u.n. owen";
+	}
+
+	localStorage.setItem("username", username);
+
+	socket.emit("register", {
+		userId,
+		username,
+		board: currentBoard
+	});
+});
 
 document.querySelectorAll(".boardBtn").forEach(btn => {
 	btn.onclick = () => {
