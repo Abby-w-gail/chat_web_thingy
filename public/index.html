@@ -73,6 +73,25 @@
 			color:#555;
 			cursor:pointer;
 		}
+		
+		.zoomed-img {
+			position: fixed;
+			z-index: 9999;
+			transform: scale(4);
+			transform-origin: center;
+			box-shadow: 0 0 10px rgba(0,0,0,0.5);
+			cursor: zoom-out;
+		}
+
+		.img-backdrop {
+			position: fixed;
+			top:0;
+			left:0;
+			width:100vw;
+			height:100vh;
+			background: rgba(0,0,0,0.3);
+			z-index: 9998;
+		}
 	</style>
 </head>
 
@@ -220,6 +239,39 @@ function formatTime(ts) {
 	const yy = String(d.getFullYear()).slice(-2);
 
 	return `${hh}:${mm}:${ss} - ${dd}/${mo}/${yy}`;
+}
+
+let zoomed = null;
+let backdrop = null;
+
+document.addEventListener("click", (e) => {
+	if (e.target.tagName === "IMG" && e.target.closest(".msg")) {
+
+		if (zoomed === e.target) {
+			closeZoom();
+			return;
+		}
+
+		closeZoom();
+
+		backdrop = document.createElement("div");
+		backdrop.className = "img-backdrop";
+		document.body.appendChild(backdrop);
+
+		zoomed = e.target;
+		zoomed.classList.add("zoomed-img");
+
+		backdrop.onclick = closeZoom;
+		zoomed.onclick = closeZoom;
+	}
+});
+
+function closeZoom() {
+	if (zoomed) zoomed.classList.remove("zoomed-img");
+	if (backdrop) backdrop.remove();
+
+	zoomed = null;
+	backdrop = null;
 }
 
 function render(msg){
