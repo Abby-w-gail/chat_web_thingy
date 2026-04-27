@@ -218,10 +218,10 @@ function render(msg){
 			<div>
 				<span class="name">${msg.name}</span>
 				<span class="msgid">no. ${msg.msgId}</span>
-				<div class="time">${formatTime(msg.time)}</div>
 			</div>
 			<div>
 				${msg.replyTo ? `<span class="reply-inline">>>${msg.replyTo}</span>` : ""}
+				<div class="time">${formatTime(msg.time)}</div>
 				${msg.text}
 			</div>
 			<div class="reply-btn">[reply]</div>
