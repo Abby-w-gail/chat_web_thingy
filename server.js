@@ -8,11 +8,7 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-/* ---------------- SAFE STATIC ---------------- */
-
 app.use(express.static("public"));
-
-/* ---------------- STATE ---------------- */
 
 let boards = {
 	main: { messages: [], nextId: 1 },
@@ -24,8 +20,6 @@ let boards = {
 let threads = [];
 const MAX_THREADS = 20;
 const MAX_MESSAGES = 50;
-
-/* ---------------- SOCKET ---------------- */
 
 io.on("connection", (socket) => {
 	socket.userId = "unknown";
@@ -47,21 +41,14 @@ io.on("connection", (socket) => {
 		socket.emit("chat history", boards[board].messages);
 	});
 
-	/* ---------------- THREADS (SAFE ADDITION) ---------------- */
-
 	socket.on("create thread", (name) => {
 		name = String(name || "").trim().slice(0, 30);
 		if (!name) return;
 
 		const id = "thread_" + Date.now();
-
 		boards[id] = { messages: [], nextId: 1 };
 
-		threads.unshift({
-			id,
-			name,
-			lastActive: Date.now()
-		});
+		threads.unshift({ id, name, lastActive: Date.now() });
 
 		if (threads.length > MAX_THREADS) {
 			const removed = threads.pop();
@@ -71,13 +58,11 @@ io.on("connection", (socket) => {
 		io.emit("threads update", threads);
 	});
 
-	/* ---------------- MESSAGES ---------------- */
-
 	socket.on("chat message", (msg) => {
 		const board = boards[socket.board];
 		if (!board) return;
 
-		const text = String(msg?.text || "").trim().slice(0, 500);
+		const text = String(msg?.text || "").slice(0, 20000);
 		const image = msg?.image || null;
 
 		if (!text && !image) return;
@@ -93,39 +78,14 @@ io.on("connection", (socket) => {
 		};
 
 		board.messages.push(fullMsg);
-
-		if (board.messages.length > MAX_MESSAGES) {
-			board.messages.shift();
-		}
-
-		/* thread activity bump */
-		if (socket.board.startsWith("thread_")) {
-			const t = threads.find(t => t.id === socket.board);
-			if (t) {
-				t.lastActive = Date.now();
-				threads.sort((a, b) => b.lastActive - a.lastActive);
-				io.emit("threads update", threads);
-			}
-		}
+		if (board.messages.length > MAX_MESSAGES) board.messages.shift();
 
 		io.emit("chat message", {
 			board: socket.board,
 			msg: fullMsg
 		});
 	});
-
-	/* ---------------- CLEAR ---------------- */
-
-	socket.on("clear chat", () => {
-		const board = socket.board;
-		if (!boards[board]) return;
-
-		boards[board] = { messages: [], nextId: 1 };
-		io.emit("chat history", []);
-	});
 });
-
-/* ---------------- START (IMPORTANT FIX) ---------------- */
 
 server.listen(PORT, "0.0.0.0", () => {
 	console.log("server running on", PORT);
