@@ -367,18 +367,13 @@ form.onsubmit = async (e) => {
 	const file = document.getElementById("imageFile").files[0];
 
 	if (file) {
-		const fd = new FormData();
-		fd.append("image", file);
+		if (file) {
+			const r = new FileReader();
 
-		const res = await fetch("/upload", {
-			method:"POST",
-			body: fd
-		});
-
-		const data = await res.json();
-
-		if (data.path) {
-			image = data.path;
+			image = await new Promise((resolve) => {
+				r.onload = () => resolve(r.result);
+				r.readAsDataURL(file);
+			});
 		}
 	}
 
