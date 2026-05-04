@@ -1,8 +1,5 @@
 const express = require("express");
 const http = require("http");
-const path = require("path");
-const fs = require("fs");
-const multer = require("multer");
 const { Server } = require("socket.io");
 
 const app = express();
@@ -11,55 +8,11 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-/* -------------------- PATHS (Railway-safe) -------------------- */
+/* ---------------- SAFE STATIC ---------------- */
 
-const baseDir = __dirname;
-const publicDir = path.join(baseDir, "public");
-const uploadDir = path.join(publicDir, "uploads");
+app.use(express.static("public"));
 
-/* ensure folders always exist */
-fs.mkdirSync(publicDir, { recursive: true });
-fs.mkdirSync(uploadDir, { recursive: true });
-
-/* -------------------- STATIC -------------------- */
-
-app.use(express.static(publicDir));
-
-/* -------------------- MULTER UPLOADS -------------------- */
-
-const storage = multer.diskStorage({
-	destination: (req, file, cb) => {
-		cb(null, uploadDir);
-	},
-	filename: (req, file, cb) => {
-		const safeExt = path.extname(file.originalname || "").toLowerCase();
-		cb(null, Date.now() + "_" + Math.floor(Math.random() * 999999) + safeExt);
-	}
-});
-
-const upload = multer({
-	storage,
-	limits: {
-		fileSize: 5 * 1024 * 1024 // 5mb cap
-	}
-});
-
-app.post("/upload", upload.single("image"), (req, res) => {
-	try {
-		if (!req.file) {
-			return res.status(400).json({ error: "no file uploaded" });
-		}
-
-		return res.json({
-			path: "/uploads/" + req.file.filename
-		});
-	} catch (err) {
-		console.error("upload error:", err);
-		return res.status(500).json({ error: "upload failed" });
-	}
-});
-
-/* -------------------- DATA -------------------- */
+/* ---------------- STATE ---------------- */
 
 let boards = {
 	main: { messages: [], nextId: 1 },
@@ -72,7 +25,7 @@ let threads = [];
 const MAX_THREADS = 20;
 const MAX_MESSAGES = 50;
 
-/* -------------------- SOCKETS -------------------- */
+/* ---------------- SOCKET ---------------- */
 
 io.on("connection", (socket) => {
 	socket.userId = "unknown";
@@ -90,16 +43,17 @@ io.on("connection", (socket) => {
 
 	socket.on("switch board", (board) => {
 		if (!boards[board]) return;
-
 		socket.board = board;
 		socket.emit("chat history", boards[board].messages);
 	});
+
+	/* ---------------- THREADS (SAFE ADDITION) ---------------- */
 
 	socket.on("create thread", (name) => {
 		name = String(name || "").trim().slice(0, 30);
 		if (!name) return;
 
-		const id = "thread_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
+		const id = "thread_" + Date.now();
 
 		boards[id] = { messages: [], nextId: 1 };
 
@@ -117,17 +71,19 @@ io.on("connection", (socket) => {
 		io.emit("threads update", threads);
 	});
 
+	/* ---------------- MESSAGES ---------------- */
+
 	socket.on("chat message", (msg) => {
-		const boardData = boards[socket.board];
-		if (!boardData) return;
+		const board = boards[socket.board];
+		if (!board) return;
 
 		const text = String(msg?.text || "").trim().slice(0, 500);
-		const image = msg?.image ? String(msg.image) : null;
+		const image = msg?.image || null;
 
 		if (!text && !image) return;
 
 		const fullMsg = {
-			msgId: boardData.nextId++,
+			msgId: board.nextId++,
 			name: `${socket.username} #${socket.userId}`,
 			userId: socket.userId,
 			text,
@@ -136,14 +92,15 @@ io.on("connection", (socket) => {
 			time: Date.now()
 		};
 
-		boardData.messages.push(fullMsg);
+		board.messages.push(fullMsg);
 
-		if (boardData.messages.length > MAX_MESSAGES) {
-			boardData.messages.shift();
+		if (board.messages.length > MAX_MESSAGES) {
+			board.messages.shift();
 		}
 
+		/* thread activity bump */
 		if (socket.board.startsWith("thread_")) {
-			const t = threads.find(x => x.id === socket.board);
+			const t = threads.find(t => t.id === socket.board);
 			if (t) {
 				t.lastActive = Date.now();
 				threads.sort((a, b) => b.lastActive - a.lastActive);
@@ -157,18 +114,19 @@ io.on("connection", (socket) => {
 		});
 	});
 
+	/* ---------------- CLEAR ---------------- */
+
 	socket.on("clear chat", () => {
 		const board = socket.board;
 		if (!boards[board]) return;
 
 		boards[board] = { messages: [], nextId: 1 };
-
 		io.emit("chat history", []);
 	});
 });
 
-/* -------------------- START -------------------- */
+/* ---------------- START (IMPORTANT FIX) ---------------- */
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
 	console.log("server running on", PORT);
 });
