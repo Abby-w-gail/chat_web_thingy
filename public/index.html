@@ -1,198 +1,186 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>chat thingy</title>
+<title>chat thingy</title>
 
-	<style>
-		body {
-			background:#eef2ff;
-			font-family:"Times New Roman";
-			margin:0;
-		}
+<style>
+body {
+	background:#eef2ff;
+	font-family:"Times New Roman";
+	margin:0;
+}
 
-		#layout {
-			display:flex;
-			width:1000px;
-			margin:20px auto;
-			gap:10px;
-		}
+#layout {
+	display:flex;
+	width:1000px;
+	margin:20px auto;
+	gap:10px;
+}
 
-		#container {
-			width:700px;
-			background:white;
-			border:1px solid #aaa;
-			padding:10px;
-			display:flex;
-			flex-direction:column;
-			height:80vh;
-		}
+/* left part */
+#container {
+	width:700px;
+	background:white;
+	border:1px solid #aaa;
+	padding:10px;
+	display:flex;
+	flex-direction:column;
+	height:80vh;
+}
 
-		h1 {
-			font-size:20px;
-			margin:0 0 10px 0;
-			color:#800000;
-		}
+h1 {
+	font-size:20px;
+	margin:0 0 10px 0;
+	color:#800000;
+}
 
-		#messages {
-			flex:1;
-			overflow-y:auto;
-			border:1px solid #ddd;
-			padding:5px;
-			margin-bottom:10px;
-			list-style:none;
-		}
+/* chat */
+#messages {
+	flex:1;
+	overflow-y:auto;
+	border:1px solid #ddd;
+	padding:5px;
+	margin-bottom:10px;
+	list-style:none;
+}
 
-		.msg {
-			display:flex;
-			gap:10px;
-			padding:6px;
-			border-bottom:1px solid #eee;
-			align-items:flex-start;
-		}
+.msg {
+	display:flex;
+	gap:10px;
+	padding:6px;
+	border-bottom:1px solid #eee;
+}
 
-		.msg img {
-			max-width:120px;
-			max-height:120px;
-			border:1px solid #aaa;
-			cursor:pointer;
-		}
+.msg img {
+	max-width:120px;
+	max-height:120px;
+	border:1px solid #aaa;
+	cursor:pointer;
+}
 
-		.msg-content { flex:1; }
+.msg-content { flex:1; }
 
-		.name {
-			color:#117743;
-			font-weight:bold;
-		}
+.name { color:#117743; font-weight:bold; }
+.msgid { color:#888; font-size:11px; margin-left:6px; }
 
-		.msgid {
-			color:#888;
-			font-size:11px;
-			margin-left:6px;
-		}
+.reply-btn {
+	font-size:12px;
+	color:#555;
+	cursor:pointer;
+}
 
-		.reply-inline {
-			display:block;
-			margin-bottom:2px;
-		}
+/* input area */
+textarea {
+	width:100%;
+	min-height:50px;
+	max-height:300px;
+	resize:vertical;
+	overflow:auto;
+	font-family:"Times New Roman";
+}
 
-		.reply-link {
-			color:#800000;
-			cursor:pointer;
-		}
+/* threads */
+#threadsPanel {
+	width:250px;
+	background:white;
+	border:1px solid #aaa;
+	padding:10px;
+	display:flex;
+	flex-direction:column;
+	height:80vh;
+}
 
-		form {
-			display:flex;
-			gap:5px;
-		}
+#threadList {
+	flex:1;
+	overflow-y:auto;
+	border:1px solid #ddd;
+}
 
-		input {
-			padding:5px;
-			border:1px solid #aaa;
-		}
+.threadItem {
+	padding:6px;
+	border-bottom:1px solid #eee;
+	cursor:pointer;
+}
 
-		#boards {
-			display:flex;
-			justify-content:center;
-			gap:10px;
-			margin-top:10px;
-		}
+#newThreadBtn {
+	margin-top:auto;
+}
 
-		.boardBtn {
-			padding:5px;
-			border:1px solid #888;
-			background:#eee;
-			cursor:pointer;
-		}
+/* image zooming */
+.zoomed-img {
+	position:fixed;
+	top:50%;
+	left:50%;
+	transform:scale(3) translate(-50%,-50%);
+	max-width:90vw;
+	max-height:90vh;
+	z-index:9999;
+}
 
-		.boardBtn.active {
-			background:#ddd;
-		}
+.img-backdrop {
+	position:fixed;
+	inset:0;
+	background:rgba(0,0,0,0.4);
+	z-index:9998;
+}
 
-		#threadsPanel {
-			width:250px;
-			background:white;
-			border:1px solid #aaa;
-			padding:10px;
-			display:flex;
-			flex-direction:column;
-			height:80vh;
-		}
+/* html writing */
+.html-preview {
+	background:#f8f8f8;
+	border:1px solid #aaa;
+	padding:6px;
+}
 
-		#threadList {
-			flex:1;
-			overflow-y:auto;
-			border:1px solid #ddd;
-		}
+#form {
+	flex-shrink:0;
+}
 
-		.threadItem {
-			padding:6px;
-			border-bottom:1px solid #eee;
-			cursor:pointer;
-		}
+/* help ? button */
+#helpBtn {
+	position:fixed;
+	top:10px;
+	left:10px;
+	width:22px;
+	height:22px;
+	background:#ddd;
+	border:1px solid #888;
+	text-align:center;
+	cursor:pointer;
+}
 
-		.reply-btn {
-			font-size:12px;
-			color:#555;
-			cursor:pointer;
-		}
+.hidden { display:none !important; }
 
-		.zoomed-img {
-			position: fixed;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			max-width: 90vw !important;
-			max-height: 90vh !important;
-			width: auto !important;
-			height: auto !important;
-			z-index: 9999;
-			cursor: zoom-out;
-		}
+#helpModal {
+	position:fixed;
+	inset:0;
+	background:rgba(0,0,0,0.5);
+	display:flex;
+	justify-content:center;
+	align-items:center;
+}
 
-		.img-backdrop {
-			position:fixed;
-			inset:0;
-			background:rgba(0,0,0,0.4);
-			z-index:9998;
-		}
-		
-				#helpBtn {
-			position: fixed;
-			top: 10px;
-			left: 10px;
-			width: 22px;
-			height: 22px;
-			background: #ddd;
-			border: 1px solid #888;
-			text-align: center;
-			line-height: 22px;
-			cursor: pointer;
-			font-weight: bold;
-			font-family: Arial;
-		}
+#helpBox {
+	background:white;
+	padding:15px;
+	border:1px solid #aaa;
+}
 
-		#helpModal {
-			position: fixed;
-			inset: 0;
-			background: rgba(0,0,0,0.5);
-			display: flex;
-			justify-content: center;
-			align-items: center;
-			z-index: 9999;
-		}
+#boards {
+	display:flex;
+	justify-content:center;
+	gap:10px;
+	margin-top:10px;
+}
 
-		#helpBox {
-			background: white;
-			padding: 15px;
-			border: 1px solid #aaa;
-			width: 300px;
-			font-family: "Times New Roman";
-		}
+#boards button {
+	border:1px solid #888;
+	background:#eee;
+	cursor:pointer;
+	border-radius:0;
 
-		.hidden {
-			display: none !important;
-		}
-	</style>
+	padding:4px 6px;
+}
+</style>
 </head>
 
 <body>
@@ -201,18 +189,8 @@
 
 <div id="helpModal" class="hidden">
 	<div id="helpBox">
-		<h3>message formatting help</h3>
-
-		<p>
-			you can color words using the formatting:
-		</p>
-
-		<pre>&lt;col:red&gt;red &lt;col:green&gt;green &lt;col:blue&gt;blue</pre>
-
-		<p>
-			each tag changes color until the next one. default color is black :3
-		</p>
-
+		<p>by doing stuff like "&lt;col:red&gt;" text can be given colors</p>
+		<p>by starting message with "&lt;html&gt;" the rest of message will be treated as raw html mode (some stuff may not work! really wip)</p>
 		<button id="closeHelp">close</button>
 	</div>
 </div>
@@ -220,23 +198,23 @@
 <div id="layout">
 
 <div id="container">
-	<h1 id="title">/main/ :3</h1>
+	<h1 id="title">/main/</h1>
 
 	<ul id="messages"></ul>
 
 	<form id="form">
-		<input id="input" placeholder="message..." autocomplete="off">
+		<textarea id="input"></textarea>
 		<button>send</button>
 	</form>
 
-	<input type="file" id="imageFile" accept="image/*">
+	<input type="file" id="imageFile">
 	<input id="username" placeholder="username">
 
 	<div id="boards">
-		<button class="boardBtn active" data-board="main">/main/</button>
-		<button class="boardBtn" data-board="b">/b/</button>
-		<button class="boardBtn" data-board="food">/food/</button>
-		<button class="boardBtn" data-board="images">/images/</button>
+		<button data-board="main">/main/</button>
+		<button data-board="b">/b/</button>
+		<button data-board="food">/food/</button>
+		<button data-board="images">/images/</button>
 	</div>
 </div>
 
@@ -248,7 +226,6 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-
 <script>
 const socket = io();
 
@@ -260,96 +237,53 @@ let currentBoard = "main";
 let replyTarget = null;
 
 const messages = document.getElementById("messages");
-const form = document.getElementById("form");
 const input = document.getElementById("input");
 const usernameInput = document.getElementById("username");
-const title = document.getElementById("title");
 
 usernameInput.value = username;
 
-socket.emit("register", {
-	userId,
-	username,
-	board: currentBoard
-});
+socket.emit("register", { userId, username, board: currentBoard });
 
-/* ---------- helpers ---------- */
-function esc(str) {
-	return String(str)
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll('"', "&quot;");
-}
+/* ---------- the ? help btn ---------- */
+const helpBtn = document.getElementById("helpBtn");
+const helpModal = document.getElementById("helpModal");
+const closeHelp = document.getElementById("closeHelp");
 
-function formatTime(ts) {
-	const d = new Date(ts);
+helpBtn.onclick = () => helpModal.classList.remove("hidden");
+closeHelp.onclick = () => helpModal.classList.add("hidden");
 
-	const hh = String(d.getHours()).padStart(2,"0");
-	const mm = String(d.getMinutes()).padStart(2,"0");
-	const ss = String(d.getSeconds()).padStart(2,"0");
-
-	const dd = String(d.getDate()).padStart(2,"0");
-	const mo = String(d.getMonth()+1).padStart(2,"0");
-	const yy = String(d.getFullYear()).slice(-2);
-
-	return `${hh}:${mm}:${ss} - ${dd}/${mo}/${yy}`;
-}
-
-/* ---------- username ---------- */
-usernameInput.addEventListener("input", () => {
-	username = usernameInput.value.trim() || "u.n. owen";
-
+/* ---------- username input ---------- */
+usernameInput.oninput = () => {
+	username = usernameInput.value || "u.n. owen";
 	localStorage.setItem("username", username);
-
-	socket.emit("register", {
-		userId,
-		username,
-		board: currentBoard
-	});
-});
+	socket.emit("register", { userId, username, board: currentBoard });
+};
 
 /* ---------- boards ---------- */
-document.querySelectorAll(".boardBtn").forEach(btn => {
+document.querySelectorAll("[data-board]").forEach(btn => {
 	btn.onclick = () => {
 		currentBoard = btn.dataset.board;
-
-		title.innerText = `/${currentBoard}/ :3`;
-
-		document.querySelectorAll(".boardBtn")
-			.forEach(b => b.classList.remove("active"));
-
-		btn.classList.add("active");
-
 		socket.emit("switch board", currentBoard);
 	};
 });
 
-/* ---------- threads ---------- */
+/* ---------- fakeass boards (threads) ---------- */
 document.getElementById("newThreadBtn").onclick = () => {
-	let name = prompt("thread name (max 30 chars)");
-	if (!name) return;
-
-	socket.emit("create thread", name);
+	const name = prompt("thread name");
+	if (name) socket.emit("create thread", name);
 };
 
-socket.on("threads update", (threads) => {
+socket.on("threads update", threads => {
 	const list = document.getElementById("threadList");
 	list.innerHTML = "";
 
 	threads.forEach(t => {
 		const div = document.createElement("div");
-
 		div.className = "threadItem";
 		div.textContent = t.name;
 
 		div.onclick = () => {
 			currentBoard = t.id;
-			title.innerText = t.name + " :3";
-
-			document.querySelectorAll(".boardBtn")
-				.forEach(b => b.classList.remove("active"));
-
 			socket.emit("switch board", t.id);
 		};
 
@@ -357,193 +291,163 @@ socket.on("threads update", (threads) => {
 	});
 });
 
-/* ---------- sending ---------- */
-form.onsubmit = async (e) => {
-	e.preventDefault();
+/* ---------- color parsing ---------- */
+function esc(s){
+	return String(s)
+	.replaceAll("&","&amp;")
+	.replaceAll("<","&lt;")
+	.replaceAll(">","&gt;");
+}
 
-	let text = input.value.trim();
-	let image = null;
-
-	const file = document.getElementById("imageFile").files[0];
-
-	if (file) {
-		if (file) {
-			const r = new FileReader();
-
-			image = await new Promise((resolve) => {
-				r.onload = () => resolve(r.result);
-				r.readAsDataURL(file);
-			});
-		}
-	}
-
-	if (!text && !image) return;
-
-	socket.emit("chat message", {
-		text,
-		image,
-		replyTo: replyTarget
-	});
-
-	input.value = "";
-	replyTarget = null;
-	input.placeholder = "message...";
-	document.getElementById("imageFile").value = "";
-};
-
-/* ---------- render ---------- */
-
-function parseColors(text) {
-	text = text
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;");
+function parseColors(text){
+	text = esc(text);
 
 	const regex = /&lt;col:([^&]+)&gt;/g;
 
 	let result = "";
-	let lastIndex = 0;
-	let match;
+	let last = 0;
+	let m;
+	let color = "black";
 
-	let currentColor = "black";
-
-	while ((match = regex.exec(text)) !== null) {
-
-		result += `<span style="color:${currentColor}">` +
-			text.slice(lastIndex, match.index) +
+	while((m = regex.exec(text))){
+		result += `<span style="color:${color}">` +
+			text.slice(last, m.index) +
 		`</span>`;
 
-		currentColor = match[1].trim();
-		lastIndex = regex.lastIndex;
+		color = m[1];
+		last = regex.lastIndex;
 	}
 
-	result += `<span style="color:${currentColor}">` +
-		text.slice(lastIndex) +
+	result += `<span style="color:${color}">` +
+		text.slice(last) +
 	`</span>`;
 
 	return result;
 }
 
-function render(msg) {
-	const li = document.createElement("li");
-	li.className = "msg";
-	li.id = "msg-" + msg.msgId;
+/* ---------- image zooming ---------- */
+let zoomed=null, backdrop=null;
 
-	li.innerHTML = `
+document.addEventListener("click", e=>{
+	if(e.target.tagName==="IMG" && e.target.closest(".msg")){
+		if(zoomed===e.target){ close(); return; }
+
+		close();
+
+		backdrop=document.createElement("div");
+		backdrop.className="img-backdrop";
+		document.body.appendChild(backdrop);
+
+		zoomed=e.target;
+		zoomed.classList.add("zoomed-img");
+
+		backdrop.onclick=close;
+		zoomed.onclick=close;
+	}
+});
+
+function close(){
+	if(zoomed) zoomed.classList.remove("zoomed-img");
+	if(backdrop) backdrop.remove();
+	zoomed=null; backdrop=null;
+}
+
+/* ---------- rendering messages ---------- */
+function render(msg){
+	const li=document.createElement("li");
+	li.className="msg";
+	li.id="msg-"+msg.msgId;
+
+	let body;
+
+	if(msg.text.startsWith("<html>")){
+	const html = document.createElement("div");
+	html.className = "html-preview";
+	html.innerHTML = msg.text.slice(6);
+
+	body = html.outerHTML;
+}else{
+		body = parseColors(msg.text).replaceAll("\n","<br>");
+	}
+
+	li.innerHTML=`
 		${msg.image ? `<img src="${msg.image}">` : ""}
 		<div class="msg-content">
+
 			<div>
-				<span class="name">${esc(msg.name)}</span>
-				<span class="msgid">no. ${msg.msgId}</span>
-				<span class="msgid">${formatTime(msg.time)}</span>
+				<span class="name">${msg.name}</span>
+				<span class="msgid">#${msg.msgId} ${new Date(msg.time).toLocaleString()}</span>
 			</div>
 
 			<div>
-				${msg.replyTo ? `<span class="reply-inline reply-link" data-jump="${msg.replyTo}">>>${msg.replyTo}</span>` : ""}
-				${parseColors(msg.text)}
+				${msg.replyTo ? `<div class="reply-link">>>${msg.replyTo}</div>` : ""}
+				${body}
 			</div>
 
 			<div class="reply-btn">[reply]</div>
 		</div>
 	`;
 
-	li.querySelector(".reply-btn").onclick = () => {
+	const replyBtn = li.querySelector(".reply-btn");
+	replyBtn.onclick = () => {
 		replyTarget = msg.msgId;
-		input.placeholder = "replying to >>" + msg.msgId;
-		input.focus();
+		input.placeholder = "replying to >>"+msg.msgId;
 	};
 
-	const jump = li.querySelector("[data-jump]");
-
-	if (jump) {
-		jump.onclick = () => {
-			const target = document.getElementById("msg-" + msg.replyTo);
-
-			if (target) {
-				target.scrollIntoView({
-					behavior:"smooth",
-					block:"center"
-				});
-
-				target.style.background = "#fff7cc";
-
-				setTimeout(() => {
-					target.style.background = "";
-				}, 1000);
-			}
+	const replyLink = li.querySelector(".reply-link");
+	if(replyLink){
+		replyLink.onclick = () => {
+			const t=document.getElementById("msg-"+msg.replyTo);
+			if(!t) return;
+			t.scrollIntoView({behavior:"smooth",block:"center"});
+			t.style.background="#fff7cc";
+			setTimeout(()=>t.style.background="",1000);
 		};
 	}
 
 	messages.appendChild(li);
-	messages.scrollTop = messages.scrollHeight;
+	messages.scrollTop=messages.scrollHeight;
 }
 
+/* ---------- sending messages ---------- */
+document.getElementById("form").onsubmit = async (e)=>{
+	e.preventDefault();
 
-/* ---------- socket receive ---------- */
-socket.on("chat history", (history) => {
-	messages.innerHTML = "";
-	history.forEach(render);
-});
+	let text=input.value;
+	let image=null;
 
-socket.on("chat message", (data) => {
-	if (data.board !== currentBoard) return;
-	render(data.msg);
-});
+	const file=document.getElementById("imageFile").files[0];
 
-/* ---------- image zoom ---------- */
-let zoomed = null;
-let backdrop = null;
-
-document.addEventListener("click", (e) => {
-	if (e.target.tagName === "IMG" && e.target.closest(".msg")) {
-
-		if (zoomed === e.target) {
-			closeZoom();
-			return;
-		}
-
-		closeZoom();
-
-		backdrop = document.createElement("div");
-		backdrop.className = "img-backdrop";
-		document.body.appendChild(backdrop);
-
-		zoomed = e.target;
-		zoomed.classList.add("zoomed-img");
-
-		backdrop.onclick = closeZoom;
-		zoomed.onclick = closeZoom;
+	if(file){
+		image=await new Promise(res=>{
+			const r=new FileReader();
+			r.onload=()=>res(r.result);
+			r.readAsDataURL(file);
+		});
 	}
+
+	socket.emit("chat message",{
+		text,
+		image,
+		replyTo:replyTarget
+	});
+
+	input.value="";
+	input.placeholder = "message...";	
+	replyTarget=null;
+	document.getElementById("imageFile").value = "";
+};
+
+/* ---------- socket ---------- */
+socket.on("chat history",h=>{
+	messages.innerHTML="";
+	h.forEach(render);
 });
 
-function closeZoom() {
-	if (zoomed) zoomed.classList.remove("zoomed-img");
-	if (backdrop) backdrop.remove();
-
-	zoomed = null;
-	backdrop = null;
-}
-
-/* -------- help popup -------------- */
-
-const helpBtn = document.getElementById("helpBtn");
-const helpModal = document.getElementById("helpModal");
-const closeHelp = document.getElementById("closeHelp");
-
-helpBtn.onclick = () => {
-	helpModal.classList.remove("hidden");
-};
-
-closeHelp.onclick = () => {
-	helpModal.classList.add("hidden");
-};
-
-helpModal.onclick = (e) => {
-	if (e.target === helpModal) {
-		helpModal.classList.add("hidden");
-	}
-};
-
+socket.on("chat message",d=>{
+	if(d.board!==currentBoard) return;
+	render(d.msg);
+});
 </script>
 
 </body>
