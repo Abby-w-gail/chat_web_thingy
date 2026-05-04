@@ -11,48 +11,60 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
-/* ---------- folders ---------- */
-const publicDir = path.join(__dirname, "public");
+/* -------------------- PATHS (Railway-safe) -------------------- */
+
+const baseDir = __dirname;
+const publicDir = path.join(baseDir, "public");
 const uploadDir = path.join(publicDir, "uploads");
 
-if (!fs.existsSync(uploadDir)) {
-	fs.mkdirSync(uploadDir, { recursive: true });
-}
+/* ensure folders always exist */
+fs.mkdirSync(publicDir, { recursive: true });
+fs.mkdirSync(uploadDir, { recursive: true });
 
-/* ---------- uploads ---------- */
+/* -------------------- STATIC -------------------- */
+
+app.use(express.static(publicDir));
+
+/* -------------------- MULTER UPLOADS -------------------- */
+
 const storage = multer.diskStorage({
-	destination: (req, file, cb) => cb(null, uploadDir),
-
+	destination: (req, file, cb) => {
+		cb(null, uploadDir);
+	},
 	filename: (req, file, cb) => {
-		const ext = path.extname(file.originalname).toLowerCase();
-		cb(null, Date.now() + "_" + Math.floor(Math.random() * 999999) + ext);
+		const safeExt = path.extname(file.originalname || "").toLowerCase();
+		cb(null, Date.now() + "_" + Math.floor(Math.random() * 999999) + safeExt);
 	}
 });
 
 const upload = multer({
 	storage,
 	limits: {
-		fileSize: 5 * 1024 * 1024
+		fileSize: 5 * 1024 * 1024 // 5mb cap
 	}
 });
-
-app.use(express.static(publicDir));
 
 app.post("/upload", upload.single("image"), (req, res) => {
-	if (!req.file) {
-		return res.status(400).json({ error: "no file" });
-	}
+	try {
+		if (!req.file) {
+			return res.status(400).json({ error: "no file uploaded" });
+		}
 
-	res.json({
-		path: "/uploads/" + req.file.filename
-	});
+		return res.json({
+			path: "/uploads/" + req.file.filename
+		});
+	} catch (err) {
+		console.error("upload error:", err);
+		return res.status(500).json({ error: "upload failed" });
+	}
 });
 
-/* ---------- data ---------- */
+/* -------------------- DATA -------------------- */
+
 let boards = {
-	main:   { messages: [], nextId: 1 },
-	b:      { messages: [], nextId: 1 },
-	food:   { messages: [], nextId: 1 },
+	main: { messages: [], nextId: 1 },
+	b: { messages: [], nextId: 1 },
+	food: { messages: [], nextId: 1 },
 	images: { messages: [], nextId: 1 }
 };
 
@@ -60,16 +72,8 @@ let threads = [];
 const MAX_THREADS = 20;
 const MAX_MESSAGES = 50;
 
-/* ---------- helpers ---------- */
-function sendBoardHistory(board) {
-	io.sockets.sockets.forEach((s) => {
-		if (s.board === board) {
-			s.emit("chat history", boards[board].messages);
-		}
-	});
-}
+/* -------------------- SOCKETS -------------------- */
 
-/* ---------- socket ---------- */
 io.on("connection", (socket) => {
 	socket.userId = "unknown";
 	socket.username = "u.n. owen";
@@ -97,10 +101,7 @@ io.on("connection", (socket) => {
 
 		const id = "thread_" + Date.now() + "_" + Math.floor(Math.random() * 9999);
 
-		boards[id] = {
-			messages: [],
-			nextId: 1
-		};
+		boards[id] = { messages: [], nextId: 1 };
 
 		threads.unshift({
 			id,
@@ -143,7 +144,6 @@ io.on("connection", (socket) => {
 
 		if (socket.board.startsWith("thread_")) {
 			const t = threads.find(x => x.id === socket.board);
-
 			if (t) {
 				t.lastActive = Date.now();
 				threads.sort((a, b) => b.lastActive - a.lastActive);
@@ -161,15 +161,14 @@ io.on("connection", (socket) => {
 		const board = socket.board;
 		if (!boards[board]) return;
 
-		boards[board] = {
-			messages: [],
-			nextId: 1
-		};
+		boards[board] = { messages: [], nextId: 1 };
 
-		sendBoardHistory(board);
+		io.emit("chat history", []);
 	});
 });
 
+/* -------------------- START -------------------- */
+
 server.listen(PORT, () => {
-	console.log("server running on " + PORT);
+	console.log("server running on", PORT);
 });
