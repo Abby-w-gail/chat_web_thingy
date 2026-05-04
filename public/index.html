@@ -4,24 +4,46 @@
 	<title>chat thingy</title>
 
 	<style>
-		body { background:#eef2ff; font-family:"Times New Roman"; margin:0; }
-
-		#layout { display:flex; width:1000px; margin:20px auto; gap:10px; }
-
-		#container {
-			width:700px; background:white; border:1px solid #aaa;
-			padding:10px; display:flex; flex-direction:column; height:80vh;
+		body {
+			background:#eef2ff;
+			font-family:"Times New Roman";
+			margin:0;
 		}
 
-		h1 { font-size:20px; margin:0 0 10px 0; color:#800000; }
+		#layout {
+			display:flex;
+			width:1000px;
+			margin:20px auto;
+			gap:10px;
+		}
+
+		#container {
+			width:700px;
+			background:white;
+			border:1px solid #aaa;
+			padding:10px;
+			display:flex;
+			flex-direction:column;
+			height:80vh;
+		}
+
+		h1 {
+			font-size:20px;
+			margin:0 0 10px 0;
+			color:#800000;
+		}
 
 		#messages {
-			flex:1; overflow-y:auto; border:1px solid #ddd;
-			padding:5px; margin-bottom:10px; list-style:none;
+			flex:1;
+			overflow-y:auto;
+			border:1px solid #ddd;
+			padding:5px;
+			margin-bottom:10px;
+			list-style:none;
 		}
 
 		.msg {
-			display:flex;      
+			display:flex;
 			gap:10px;
 			padding:6px;
 			border-bottom:1px solid #eee;
@@ -32,70 +54,168 @@
 			max-width:120px;
 			max-height:120px;
 			border:1px solid #aaa;
+			cursor:pointer;
 		}
 
-		.msg-content {
-			flex:1;
+		.msg-content { flex:1; }
+
+		.name {
+			color:#117743;
+			font-weight:bold;
 		}
 
-		.name { color:#117743; font-weight:bold; }
+		.msgid {
+			color:#888;
+			font-size:11px;
+			margin-left:6px;
+		}
 
-		.msgid { color:#888; font-size:11px; margin-left:6px; }
+		.reply-inline {
+			display:block;
+			margin-bottom:2px;
+		}
 
-	.reply-inline {
-		color: #000;
-		font-size: inherit;
-		font-weight: normal;
-		display: block;
-		margin-bottom: 2px;
-	}
+		.reply-link {
+			color:#800000;
+			cursor:pointer;
+		}
 
-		form { display:flex; gap:5px; }
+		form {
+			display:flex;
+			gap:5px;
+		}
 
-		input { padding:5px; border:1px solid #aaa; }
+		input {
+			padding:5px;
+			border:1px solid #aaa;
+		}
 
-		#boards { display:flex; justify-content:center; gap:10px; margin-top:10px; }
+		#boards {
+			display:flex;
+			justify-content:center;
+			gap:10px;
+			margin-top:10px;
+		}
 
-		.boardBtn { padding:5px; border:1px solid #888; background:#eee; cursor:pointer; }
-		.boardBtn.active { background:#ddd; }
+		.boardBtn {
+			padding:5px;
+			border:1px solid #888;
+			background:#eee;
+			cursor:pointer;
+		}
+
+		.boardBtn.active {
+			background:#ddd;
+		}
 
 		#threadsPanel {
-			width:250px; background:white; border:1px solid #aaa;
-			padding:10px; display:flex; flex-direction:column; height:80vh;
+			width:250px;
+			background:white;
+			border:1px solid #aaa;
+			padding:10px;
+			display:flex;
+			flex-direction:column;
+			height:80vh;
 		}
 
-		#threadList { flex:1; overflow-y:auto; border:1px solid #ddd; }
+		#threadList {
+			flex:1;
+			overflow-y:auto;
+			border:1px solid #ddd;
+		}
 
-		.threadItem { padding:6px; border-bottom:1px solid #eee; cursor:pointer; }
+		.threadItem {
+			padding:6px;
+			border-bottom:1px solid #eee;
+			cursor:pointer;
+		}
 
 		.reply-btn {
 			font-size:12px;
 			color:#555;
 			cursor:pointer;
 		}
-		
+
 		.zoomed-img {
 			position: fixed;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			max-width: 90vw !important;
+			max-height: 90vh !important;
+			width: auto !important;
+			height: auto !important;
 			z-index: 9999;
-			transform: scale(4);
-			transform-origin: center;
-			box-shadow: 0 0 10px rgba(0,0,0,0.5);
 			cursor: zoom-out;
 		}
 
 		.img-backdrop {
+			position:fixed;
+			inset:0;
+			background:rgba(0,0,0,0.4);
+			z-index:9998;
+		}
+		
+				#helpBtn {
 			position: fixed;
-			top:0;
-			left:0;
-			width:100vw;
-			height:100vh;
-			background: rgba(0,0,0,0.3);
-			z-index: 9998;
+			top: 10px;
+			left: 10px;
+			width: 22px;
+			height: 22px;
+			background: #ddd;
+			border: 1px solid #888;
+			text-align: center;
+			line-height: 22px;
+			cursor: pointer;
+			font-weight: bold;
+			font-family: Arial;
+		}
+
+		#helpModal {
+			position: fixed;
+			inset: 0;
+			background: rgba(0,0,0,0.5);
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			z-index: 9999;
+		}
+
+		#helpBox {
+			background: white;
+			padding: 15px;
+			border: 1px solid #aaa;
+			width: 300px;
+			font-family: "Times New Roman";
+		}
+
+		.hidden {
+			display: none !important;
 		}
 	</style>
 </head>
 
 <body>
+
+<div id="helpBtn">?</div>
+
+<div id="helpModal" class="hidden">
+	<div id="helpBox">
+		<h3>message formatting help</h3>
+
+		<p>
+			you can color words using the formatting:
+		</p>
+
+		<pre>&lt;col:red&gt;red &lt;col:green&gt;green &lt;col:blue&gt;blue</pre>
+
+		<p>
+			each tag changes color until the next one. default color is black :3
+		</p>
+
+		<button id="closeHelp">close</button>
+	</div>
+</div>
 
 <div id="layout">
 
@@ -105,13 +225,12 @@
 	<ul id="messages"></ul>
 
 	<form id="form">
-		<input id="input" placeholder="message..." />
+		<input id="input" placeholder="message..." autocomplete="off">
 		<button>send</button>
 	</form>
 
-	<input type="file" id="imageFile" />
-	<input id="username" placeholder="username" />
-
+	<input type="file" id="imageFile" accept="image/*">
+	<input id="username" placeholder="username">
 
 	<div id="boards">
 		<button class="boardBtn active" data-board="main">/main/</button>
@@ -131,6 +250,8 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
+const socket = io();
+
 let userId = localStorage.getItem("userId") || Math.floor(Math.random()*999999);
 localStorage.setItem("userId", userId);
 
@@ -138,24 +259,46 @@ let username = localStorage.getItem("username") || "u.n. owen";
 let currentBoard = "main";
 let replyTarget = null;
 
-const socket = io();
-
-socket.emit("register", { userId, username, board: currentBoard });
-
 const messages = document.getElementById("messages");
-const input = document.getElementById("input");
 const form = document.getElementById("form");
-const title = document.getElementById("title");
+const input = document.getElementById("input");
 const usernameInput = document.getElementById("username");
+const title = document.getElementById("title");
 
 usernameInput.value = username;
 
-usernameInput.addEventListener("input", () => {
-	username = usernameInput.value.trim();
+socket.emit("register", {
+	userId,
+	username,
+	board: currentBoard
+});
 
-	if (!username) {
-		username = "u.n. owen";
-	}
+/* ---------- helpers ---------- */
+function esc(str) {
+	return String(str)
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;")
+		.replaceAll('"', "&quot;");
+}
+
+function formatTime(ts) {
+	const d = new Date(ts);
+
+	const hh = String(d.getHours()).padStart(2,"0");
+	const mm = String(d.getMinutes()).padStart(2,"0");
+	const ss = String(d.getSeconds()).padStart(2,"0");
+
+	const dd = String(d.getDate()).padStart(2,"0");
+	const mo = String(d.getMonth()+1).padStart(2,"0");
+	const yy = String(d.getFullYear()).slice(-2);
+
+	return `${hh}:${mm}:${ss} - ${dd}/${mo}/${yy}`;
+}
+
+/* ---------- username ---------- */
+usernameInput.addEventListener("input", () => {
+	username = usernameInput.value.trim() || "u.n. owen";
 
 	localStorage.setItem("username", username);
 
@@ -166,81 +309,193 @@ usernameInput.addEventListener("input", () => {
 	});
 });
 
+/* ---------- boards ---------- */
 document.querySelectorAll(".boardBtn").forEach(btn => {
 	btn.onclick = () => {
 		currentBoard = btn.dataset.board;
+
 		title.innerText = `/${currentBoard}/ :3`;
 
-		document.querySelectorAll(".boardBtn").forEach(b=>b.classList.remove("active"));
+		document.querySelectorAll(".boardBtn")
+			.forEach(b => b.classList.remove("active"));
+
 		btn.classList.add("active");
 
 		socket.emit("switch board", currentBoard);
 	};
 });
 
+/* ---------- threads ---------- */
 document.getElementById("newThreadBtn").onclick = () => {
 	let name = prompt("thread name (max 30 chars)");
 	if (!name) return;
-	name = name.trim().slice(0,30);
+
 	socket.emit("create thread", name);
 };
 
-socket.on("threads update", (threads)=>{
+socket.on("threads update", (threads) => {
 	const list = document.getElementById("threadList");
-	list.innerHTML="";
-	threads.forEach(t=>{
-		let d=document.createElement("div");
-		d.className="threadItem";
-		d.innerText=t.name;
-		d.onclick=()=>{
-			currentBoard=t.id;
-			title.innerText=t.name+" :3";
+	list.innerHTML = "";
+
+	threads.forEach(t => {
+		const div = document.createElement("div");
+
+		div.className = "threadItem";
+		div.textContent = t.name;
+
+		div.onclick = () => {
+			currentBoard = t.id;
+			title.innerText = t.name + " :3";
+
+			document.querySelectorAll(".boardBtn")
+				.forEach(b => b.classList.remove("active"));
+
 			socket.emit("switch board", t.id);
 		};
-		list.appendChild(d);
+
+		list.appendChild(div);
 	});
 });
 
-form.onsubmit = async (e)=>{
+/* ---------- sending ---------- */
+form.onsubmit = async (e) => {
 	e.preventDefault();
 
-	let text=input.value.trim();
-	let image=null;
+	let text = input.value.trim();
+	let image = null;
 
-	const file=document.getElementById("imageFile").files[0];
-	if(file){
-		const r=new FileReader();
-		image=await new Promise(res=>{
-			r.onload=()=>res(r.result);
-			r.readAsDataURL(file);
+	const file = document.getElementById("imageFile").files[0];
+
+	if (file) {
+		const fd = new FormData();
+		fd.append("image", file);
+
+		const res = await fetch("/upload", {
+			method:"POST",
+			body: fd
 		});
+
+		const data = await res.json();
+
+		if (data.path) {
+			image = data.path;
+		}
 	}
 
-	if(!text && !image) return;
+	if (!text && !image) return;
 
-	socket.emit("chat message",{text,image,replyTo:replyTarget});
+	socket.emit("chat message", {
+		text,
+		image,
+		replyTo: replyTarget
+	});
 
-	input.value="";
-	replyTarget=null;
-	input.placeholder="message...";
-	
+	input.value = "";
+	replyTarget = null;
+	input.placeholder = "message...";
 	document.getElementById("imageFile").value = "";
 };
 
-function formatTime(ts) {
-	const d = new Date(ts);
+/* ---------- render ---------- */
 
-	const hh = String(d.getHours()).padStart(2, "0");
-	const mm = String(d.getMinutes()).padStart(2, "0");
-	const ss = String(d.getSeconds()).padStart(2, "0");
+function parseColors(text) {
+	text = text
+		.replaceAll("&", "&amp;")
+		.replaceAll("<", "&lt;")
+		.replaceAll(">", "&gt;");
 
-	const dd = String(d.getDate()).padStart(2, "0");
-	const mo = String(d.getMonth() + 1).padStart(2, "0");
-	const yy = String(d.getFullYear()).slice(-2);
+	const regex = /&lt;col:([^&]+)&gt;/g;
 
-	return `${hh}:${mm}:${ss} - ${dd}/${mo}/${yy}`;
+	let result = "";
+	let lastIndex = 0;
+	let match;
+
+	let currentColor = "black";
+
+	while ((match = regex.exec(text)) !== null) {
+
+		result += `<span style="color:${currentColor}">` +
+			text.slice(lastIndex, match.index) +
+		`</span>`;
+
+		currentColor = match[1].trim();
+		lastIndex = regex.lastIndex;
+	}
+
+	result += `<span style="color:${currentColor}">` +
+		text.slice(lastIndex) +
+	`</span>`;
+
+	return result;
 }
 
+function render(msg) {
+	const li = document.createElement("li");
+	li.className = "msg";
+	li.id = "msg-" + msg.msgId;
+
+	li.innerHTML = `
+		${msg.image ? `<img src="${msg.image}">` : ""}
+		<div class="msg-content">
+			<div>
+				<span class="name">${esc(msg.name)}</span>
+				<span class="msgid">no. ${msg.msgId}</span>
+				<span class="msgid">${formatTime(msg.time)}</span>
+			</div>
+
+			<div>
+				${msg.replyTo ? `<span class="reply-inline reply-link" data-jump="${msg.replyTo}">>>${msg.replyTo}</span>` : ""}
+				${parseColors(msg.text)}
+			</div>
+
+			<div class="reply-btn">[reply]</div>
+		</div>
+	`;
+
+	li.querySelector(".reply-btn").onclick = () => {
+		replyTarget = msg.msgId;
+		input.placeholder = "replying to >>" + msg.msgId;
+		input.focus();
+	};
+
+	const jump = li.querySelector("[data-jump]");
+
+	if (jump) {
+		jump.onclick = () => {
+			const target = document.getElementById("msg-" + msg.replyTo);
+
+			if (target) {
+				target.scrollIntoView({
+					behavior:"smooth",
+					block:"center"
+				});
+
+				target.style.background = "#fff7cc";
+
+				setTimeout(() => {
+					target.style.background = "";
+				}, 1000);
+			}
+		};
+	}
+
+	messages.appendChild(li);
+	messages.scrollTop = messages.scrollHeight;
+}
+
+
+/* ---------- socket receive ---------- */
+socket.on("chat history", (history) => {
+	messages.innerHTML = "";
+	history.forEach(render);
+});
+
+socket.on("chat message", (data) => {
+	if (data.board !== currentBoard) return;
+	render(data.msg);
+});
+
+/* ---------- image zoom ---------- */
 let zoomed = null;
 let backdrop = null;
 
@@ -274,45 +529,26 @@ function closeZoom() {
 	backdrop = null;
 }
 
-function render(msg){
-	let li=document.createElement("li");
-	li.className="msg";
+/* -------- help popup -------------- */
 
-	li.innerHTML=`
-		${msg.image ? `<img src="${msg.image}">` : ""}
-		<div class="msg-content">
-			<div>
-				<span class="name">${msg.name}</span>
-				<span class="msgid">no. ${msg.msgId}</span>
-				<span class="msgid">${formatTime(msg.time)}</span>
-			</div>
-			<div>
-				${msg.replyTo ? `<span class="reply-inline">>>${msg.replyTo}</span>` : ""}
-				${msg.text}
-			</div>
-			<div class="reply-btn">[reply]</div>
-		</div>
-	`;
+const helpBtn = document.getElementById("helpBtn");
+const helpModal = document.getElementById("helpModal");
+const closeHelp = document.getElementById("closeHelp");
 
-	li.querySelector(".reply-btn").onclick=()=>{
-		replyTarget=msg.msgId;
-		input.placeholder="replying to >>"+msg.msgId;
-		input.focus();
-	};
+helpBtn.onclick = () => {
+	helpModal.classList.remove("hidden");
+};
 
-	messages.appendChild(li);
-	messages.scrollTop=messages.scrollHeight;
-}
+closeHelp.onclick = () => {
+	helpModal.classList.add("hidden");
+};
 
-socket.on("chat history",(h)=>{
-	messages.innerHTML="";
-	h.forEach(render);
-});
+helpModal.onclick = (e) => {
+	if (e.target === helpModal) {
+		helpModal.classList.add("hidden");
+	}
+};
 
-socket.on("chat message",(d)=>{
-	if(d.board!==currentBoard) return;
-	render(d.msg);
-});
 </script>
 
 </body>
