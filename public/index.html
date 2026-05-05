@@ -180,12 +180,32 @@ textarea {
 
 	padding:4px 6px;
 }
+
+.icon {
+	position: fixed;
+	bottom: 10px;
+	left: 10px;
+
+	padding: 6px 10px; /* makes it bigger */
+	background: #ddd;
+	border: 1px solid #888;
+
+	font-family: Arial;
+	font-size: 12px;
+	text-decoration: none;
+	color: black;
+
+	display: inline-block;
+}
+
+
 </style>
 </head>
 
 <body>
 
 <div id="helpBtn">?</div>
+
 
 <div id="helpModal" class="hidden">
 	<div id="helpBox">
@@ -224,6 +244,10 @@ textarea {
 </div>
 
 </div>
+
+<a class="icon" href="https://abbyw.net/" target="_blank">
+	&gt;&gt; the developer's personal page &lt;&lt;
+</a>
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
